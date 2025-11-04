@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
+import os
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,7 +28,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,7 +38,41 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'events',
+    'rest_framework',
 ]
+AUTH_USER_MODEL = 'events.User'  # custom user model below
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}
+
+# Email (example using SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'  # or your smtp
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'apikey'        # for SendGrid's SMTP, username is 'apikey'
+EMAIL_HOST_PASSWORD = 'SENDGRID_API_KEY'  # put in environment
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'noreply@yourevent.com'
+
+# Static / media
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# PayPal config (fill from env)
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'AYJ38G_GsY5dB4kXMzx_rab3_aJOC6aS2MK0qo2OY2WTObydZrUPtVAvqDzMj_VGrVwtCVIus7COGD7u')
+PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET', 'ELD8qtmBs53Sz4N0nl8DXrmIABpssRNW8aOWFvCvI0Q30B0AjrWONy1jR_5dhNv3Wop6bJCvmzrIDkFN')
+PAYPAL_BASE = 'https://api-m.sandbox.paypal.com'  # switch to live 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
