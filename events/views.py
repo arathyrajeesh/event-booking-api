@@ -98,8 +98,9 @@ class PayPalCreateOrder(APIView):
                 "brand_name": "Event Booking API",
                 "landing_page": "NO_PREFERENCE",
                 "user_action": "PAY_NOW",
-                "return_url": "https://example.com/success",
-                "cancel_url": "https://example.com/cancel"
+                "return_url": "http://localhost/dummy-success/",
+                "cancel_url": "http://localhost/dummy-cancel/"
+
             }
         }
 
@@ -193,12 +194,15 @@ class PayPalCaptureOrder(APIView):
         if tickets:
             attach_qr_and_send_email(user_email, subject, body, tickets[0])
 
-        return Response({
-            "detail": "Payment captured and booking confirmed",
-            "payment_id": payment.payment_id,
-            "payment_status": payment.payment_status,
-            "tickets": [t.ticket_number for t in tickets]
-        }, status=status.HTTP_200_OK)
+        return Response({"detail": "Payment captured and booking confirmed","payment_id": payment.payment_id,"payment_status": payment.payment_status,
+                        "tickets": [
+                            {
+                                "ticket_number": t.ticket_number,
+                                "qr_code_url": request.build_absolute_uri(t.qr_code.url)
+                            } for t in tickets
+                        ]
+                        }, status=status.HTTP_200_OK)
+
 
 # View user's bookings
 class MyBookingsView(generics.ListAPIView):

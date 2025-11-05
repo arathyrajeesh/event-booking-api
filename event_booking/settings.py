@@ -59,15 +59,11 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-# =====================================
-# Email Configuration (Example)
-# =====================================
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'  # or your preferred SMTP host
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'apikey'  # for SendGrid, username is always 'apikey'
-EMAIL_HOST_PASSWORD = 'SENDGRID_API_KEY'  # replace with your key or env var
-EMAIL_USE_TLS = True
+# =========================
+# Email Configuration
+# =========================
+# For local testing: print emails to console instead of sending
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@yourevent.com'
 
 # =====================================

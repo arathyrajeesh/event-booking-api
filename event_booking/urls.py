@@ -14,15 +14,28 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# event_booking/urls.py
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
+
+# Dummy views for PayPal redirects
+def payment_success(request):
+    return HttpResponse("Payment completed! You can close this page.")
+
+def payment_cancel(request):
+    return HttpResponse("Payment cancelled.")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('events.urls')),
+    path('api/', include('events.urls')),  # your existing API URLs
+    path('api/payments/success/', payment_success),  # PayPal success redirect
+    path('api/payments/cancel/', payment_cancel),    # PayPal cancel redirect
 ]
 
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
