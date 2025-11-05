@@ -12,10 +12,8 @@ def generate_qr_image(ticket_number):
     return buffer
 
 def attach_qr_and_send_email(user_email, subject, body, ticket_obj):
-    # attach QR image (ticket_obj.qr_code path must already be saved)
     email = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [user_email])
     if ticket_obj.qr_code:
-        # read file
         ticket_obj.qr_code.open('rb')
         email.attach(f"{ticket_obj.ticket_number}.png", ticket_obj.qr_code.read(), 'image/png')
         ticket_obj.qr_code.close()

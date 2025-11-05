@@ -40,7 +40,10 @@ INSTALLED_APPS = [
     'events',
     'rest_framework',
 ]
-AUTH_USER_MODEL = 'events.User'  # custom user model below
+# =====================================
+# Authentication & JWT Configuration
+# =====================================
+AUTH_USER_MODEL = 'events.User'  # custom user model
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -56,23 +59,30 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-# Email (example using SMTP)
+# =====================================
+# Email Configuration (Example)
+# =====================================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'  # or your smtp
+EMAIL_HOST = 'smtp.sendgrid.net'  # or your preferred SMTP host
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'apikey'        # for SendGrid's SMTP, username is 'apikey'
-EMAIL_HOST_PASSWORD = 'SENDGRID_API_KEY'  # put in environment
+EMAIL_HOST_USER = 'apikey'  # for SendGrid, username is always 'apikey'
+EMAIL_HOST_PASSWORD = 'SENDGRID_API_KEY'  # replace with your key or env var
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'noreply@yourevent.com'
 
-# Static / media
+# =====================================
+# Static & Media Files
+# =====================================
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# PayPal config (fill from env)
-PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'AYJ38G_GsY5dB4kXMzx_rab3_aJOC6aS2MK0qo2OY2WTObydZrUPtVAvqDzMj_VGrVwtCVIus7COGD7u')
-PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET', 'ELD8qtmBs53Sz4N0nl8DXrmIABpssRNW8aOWFvCvI0Q30B0AjrWONy1jR_5dhNv3Wop6bJCvmzrIDkFN')
-PAYPAL_BASE = 'https://api-m.sandbox.paypal.com'  # switch to live 
+# =====================================
+# PayPal Configuration (Sandbox Mode)
+# =====================================
+# PayPal Sandbox Configuration
+PAYPAL_CLIENT_ID = "AV7c4qSVbRVkYtWTPKOcvc2yy53v3s4XocUqjijRQwUBC2dktWPxgPoU_RYagosfDR4iYq0mb9do6Xre"
+PAYPAL_CLIENT_SECRET = "EALeCo8zRoynRTyCiNK2tzEutHMa2S_ZyOGgXJ_RQP7s3vndj2gPBHxoB60XL4wZ2VZrNcgdyOJW6N4V"
+PAYPAL_BASE = "https://api-m.sandbox.paypal.com"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

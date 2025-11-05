@@ -53,15 +53,18 @@ class CreateBookingView(generics.CreateAPIView):
 
 # PayPal helper: get access token
 def get_paypal_access_token():
-    auth = (settings.PAYPAL_CLIENT_ID, settings.PAYPAL_SECRET)
+    auth = (settings.PAYPAL_CLIENT_ID, settings.PAYPAL_CLIENT_SECRET)
     headers = {'Accept': 'application/json', 'Accept-Language': 'en_US'}
-    r = requests.post(f"{settings.PAYPAL_BASE}/v1/oauth2/token",
-                        headers=headers,
-                        auth=auth,
-                        data={'grant_type': 'client_credentials'})
+    r = requests.post(
+        f"{settings.PAYPAL_BASE}/v1/oauth2/token",
+        headers=headers,
+        auth=auth,
+        data={'grant_type': 'client_credentials'}
+    )
     r.raise_for_status()
     return r.json()['access_token']
 
+# Create PayPal order (returns orderID to client)
 # Create PayPal order (returns orderID to client)
 class PayPalCreateOrder(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -73,7 +76,7 @@ class PayPalCreateOrder(APIView):
         if booking.status != 'PENDING':
             return Response({"detail": "Booking not pending"}, status=status.HTTP_400_BAD_REQUEST)
 
-        total = str(booking.total_amount)
+        total = "{:.2f}".format(float(booking.total_amount))  # ensure string "10.00"
         token = get_paypal_access_token()
         headers = {
             'Content-Type': 'application/json',
@@ -85,22 +88,43 @@ class PayPalCreateOrder(APIView):
             "purchase_units": [
                 {
                     "amount": {
-                        "currency_code": "USD",
+                        "currency_code": "USD" ,# or "INR" if supported
                         "value": total
-                    }
+                    },
+                    "description": f"Booking #{booking.id} - {booking.event.title}"
                 }
             ],
             "application_context": {
-                "return_url": "https://your-frontend.example/paypal-success",
-                "cancel_url": "https://your-frontend.example/paypal-cancel"
+                "brand_name": "Event Booking API",
+                "landing_page": "NO_PREFERENCE",
+                "user_action": "PAY_NOW",
+                "return_url": "https://example.com/success",
+                "cancel_url": "https://example.com/cancel"
             }
         }
 
+        # ✅ properly indented inside the method
         r = requests.post(f"{settings.PAYPAL_BASE}/v2/checkout/orders", json=payload, headers=headers)
-        r.raise_for_status()
-        data = r.json()
+        if r.status_code >= 400:
+            print("PAYPAL ERROR:", r.text)  # for debugging
+            return Response(
+                {"detail": "PayPal order creation failed", "error": r.text},
+                status=r.status_code
+            )
 
-        return Response({"orderID": data['id'], "links": data.get('links', [])})
+        data = r.json()
+        order_id = data.get("id")
+        approval_link = next(
+            (link["href"] for link in data.get("links", []) if link["rel"] == "approve"),
+            None
+        )
+
+        return Response({
+            "orderID": order_id,
+            "approval_url": approval_link,
+            "paypal_response": data
+        }, status=status.HTTP_200_OK)
+
 
 # Capture / Verify PayPal order server-side
 class PayPalCaptureOrder(APIView):
