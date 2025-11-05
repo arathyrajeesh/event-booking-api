@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -98,9 +99,8 @@ class PayPalCreateOrder(APIView):
                 "brand_name": "Event Booking API",
                 "landing_page": "NO_PREFERENCE",
                 "user_action": "PAY_NOW",
-                "return_url": "http://localhost/dummy-success/",
-                "cancel_url": "http://localhost/dummy-cancel/"
-
+                "return_url": f"http://127.0.0.1:8000/api/payments/success/?booking_id={booking.id}",
+                "cancel_url": "http://127.0.0.1:8000/api/payments/cancel/"
             }
         }
 
@@ -194,7 +194,9 @@ class PayPalCaptureOrder(APIView):
         if tickets:
             attach_qr_and_send_email(user_email, subject, body, tickets[0])
 
-        return Response({"detail": "Payment captured and booking confirmed","payment_id": payment.payment_id,"payment_status": payment.payment_status,
+        return Response({"detail": "Payment captured and booking confirmed",
+                        "payment_id": payment.payment_id,
+                        "payment_status": payment.payment_status,
                         "tickets": [
                             {
                                 "ticket_number": t.ticket_number,
@@ -211,6 +213,11 @@ class MyBookingsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Booking.objects.filter(user=self.request.user).order_by('-booking_date')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request  # Needed for full QR code URLs
+        return context
 
 # Admin Event management (simple examples)
 class AdminCreateEventView(generics.CreateAPIView):
@@ -235,3 +242,15 @@ class AdminUpdateEventView(generics.RetrieveUpdateDestroyAPIView):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Admin only")
         serializer.save()
+        
+def payment_success(request):
+    booking_id = request.GET.get('booking_id')
+    booking = Booking.objects.get(id=booking_id)
+    tickets = Ticket.objects.filter(booking=booking)
+
+    html = f"<h2>Booking Confirmed: #{booking.id}</h2>"
+    for t in tickets:
+        qr_url = request.build_absolute_uri(t.qr_code.url)
+        html += f"<p>Ticket: {t.ticket_number}<br><img src='{qr_url}' width='200'/></p>"
+
+    return HttpResponse(html)

@@ -21,21 +21,35 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
+from events.models import Booking, Ticket
 
-# Dummy views for PayPal redirects
+# Success page showing tickets and QR codes
 def payment_success(request):
-    return HttpResponse("Payment completed! You can close this page.")
+    booking_id = request.GET.get('booking_id')
+    try:
+        booking = Booking.objects.get(id=booking_id)
+        tickets = Ticket.objects.filter(booking=booking)
 
+        html = f"<h2>Booking Confirmed: #{booking.id}</h2>"
+        html += f"<p>Event: {booking.event.title}</p>"
+        html += f"<p>User: {booking.user.username} ({booking.user.email})</p>"
+        html += f"<p>Number of Tickets: {booking.num_tickets}</p>"
+        
+        return HttpResponse(html)
+
+    except Booking.DoesNotExist:
+        return HttpResponse("Booking not found", status=404)
+
+# Cancel page
 def payment_cancel(request):
     return HttpResponse("Payment cancelled.")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('events.urls')),  # your existing API URLs
-    path('api/payments/success/', payment_success),  # PayPal success redirect
-    path('api/payments/cancel/', payment_cancel),    # PayPal cancel redirect
+    path('api/', include('events.urls')),
+    path('api/payments/success/', payment_success),
+    path('api/payments/cancel/', payment_cancel),
 ]
 
-# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
